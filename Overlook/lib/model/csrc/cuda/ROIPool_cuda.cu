@@ -1,8 +1,13 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/ceil_div.h>
 
-#include <THC/THC.h>
+// https://github.com/pytorch/pytorch/pull/65472/files
+// https://github.com/pytorch/pytorch/pull/66391/files
+// https://github.com/pytorch/pytorch/pull/65492/files
+
+//#include <THC/THC.h>
 #include <THC/THCAtomics.cuh>
 #include <THC/THCDeviceUtils.cuh>
 
@@ -126,11 +131,11 @@ std::tuple<at::Tensor, at::Tensor> ROIPool_forward_cuda(const at::Tensor& input,
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  dim3 grid(std::min(THCCeilDiv(output_size, 512L), 4096L));
+  dim3 grid(std::min(at::ceil_div(output_size, 512L), 4096L));
   dim3 block(512);
 
   if (output.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    C10_CUDA_CHECK(cudaGetLastError());
     return std::make_tuple(output, argmax);
   }
 
@@ -148,7 +153,7 @@ std::tuple<at::Tensor, at::Tensor> ROIPool_forward_cuda(const at::Tensor& input,
          output.data<scalar_t>(),
          argmax.data<int>());
   });
-  THCudaCheck(cudaGetLastError());
+  C10_CUDA_CHECK(cudaGetLastError());
   return std::make_tuple(output, argmax);
 }
 
@@ -173,12 +178,12 @@ at::Tensor ROIPool_backward_cuda(const at::Tensor& grad,
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  dim3 grid(std::min(THCCeilDiv(grad.numel(), 512L), 4096L));
+  dim3 grid(std::min(at::ceil_div(grad.numel(), 512L), 4096L));
   dim3 block(512);
 
   // handle possibly empty gradients
   if (grad.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    C10_CUDA_CHECK(cudaGetLastError());
     return grad_input;
   }
 
@@ -197,6 +202,6 @@ at::Tensor ROIPool_backward_cuda(const at::Tensor& grad,
          grad_input.data<scalar_t>(),
          rois.contiguous().data<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+  C10_CUDA_CHECK(cudaGetLastError());
   return grad_input;
 }

@@ -93,7 +93,7 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    make_print_to_file(args.log_dir,os.path.basename(__file__))
+    #make_print_to_file(args.log_dir,os.path.basename(__file__))
 
     print('Called with args:')
     print(args)
@@ -241,7 +241,9 @@ if __name__ == '__main__':
         args.imdb_name = "vg_150-50-50_minitrain"
         args.imdbval_name = "vg_150-50-50_minival"
         args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-
+    
+    args.net = 'res101'
+    args.large_scale = True
     args.cfg_file = "cfgs/{}_ls.yml".format(args.net) if args.large_scale else "cfgs/{}.yml".format(args.net)
 
     if torch.cuda.is_available() and not args.cuda:

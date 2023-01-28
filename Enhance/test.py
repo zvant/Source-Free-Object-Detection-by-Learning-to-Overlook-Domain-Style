@@ -40,6 +40,8 @@ def style_transfer(vgg, decoder, content, style,fc1,fc2, alpha=1.0,
     feat = feat * alpha + content_f * (1 - alpha)
     return decoder(feat)
 
+# python test.py --vgg pre_trained/vgg16_ori.pth --decoder models/voc2clipart/decoder_iter_160000.pth --fc1 models/voc2clipart/fc1_iter_160000.pth --fc2 models/voc2clipart/fc2_iter_160000.pth --content_dir data/voc2clipart --style_dir data/voc2clipart --output output/voc2clipart --alpha 1.0
+# 
 
 parser = argparse.ArgumentParser()
 # Basic options
@@ -84,15 +86,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-if os.path.exists(args.output):
-    shutil.rmtree(args.output)
-
 do_interpolation = False
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if not os.path.exists(args.output):
-    os.makedirs(args.output)
 output_dir = args.output
 
 # Either --content or --contentDir should be given.
@@ -154,6 +151,13 @@ def preprocess(transform,path):
     img -= pixel_means
     img=torch.from_numpy(img).permute( 2, 0, 1).contiguous()
     return img
+
+print(style_paths)
+print(content_paths)
+
+# python test.py --vgg models/vgg16_ori.pth --decoder models/decoder_001_iter_50000.pth --fc1 models/fc1_001_iter_50000.pth --fc2 models/fc2_001_iter_50000.pth --content data/00000882.jpg --style data/00000882.jpg --alpha 1.0 --output data/
+# python test.py --vgg models/vgg16_ori.pth --decoder models/decoder_003_iter_50000.pth --fc1 models/fc1_003_iter_50000.pth --fc2 models/fc2_003_iter_50000.pth --content data/00161232.jpg --style data/00161232.jpg --alpha 1.0 --output data/
+# python test.py --vgg models/vgg16_ori.pth --decoder models/decoder_003_iter_50000.pth --fc1 models/fc1_003_iter_50000.pth --fc2 models/fc2_003_iter_50000.pth --content data/00000882.jpg --style data/00161232.jpg --alpha 1.0 --output data/
 
 for content_path in content_paths:
     if do_interpolation:  # one content image, N style image

@@ -55,6 +55,7 @@ def get_extensions():
 
     return ext_modules
 
+torch.version.cuda = '12.0'
 
 setup(
     name="faster_rcnn",

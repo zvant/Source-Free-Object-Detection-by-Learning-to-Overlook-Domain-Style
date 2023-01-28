@@ -149,9 +149,11 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-
-    make_print_to_file(args.log_dir, os.path.basename(__file__))
-
+    #make_print_to_file(args.log_dir, os.path.basename(__file__))
+    args.dataset = "coco"
+    args.net = 'res101'
+    args.large_scale = True
+    args.cuda = True
     print('Called with args:')
     print(args)
 
@@ -159,120 +161,14 @@ if __name__ == '__main__':
         args.imdb_name = "voc_2007_trainval"
         args.imdbval_name = "voc_2007_test"
         args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    # city->foggy city
-    elif args.dataset == "city2foggy":
-        print('loading our dataset...........')
-        args.s_imdb_name = "cityscape_2007_train_s"
-        args.t_imdb_name = "cityscape_2007_train_t"
-        args.s_imdbtest_name = "cityscape_2007_test_s500"
-        args.t_imdbtest_name = "cityscape_2007_test_t"
-
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[4,8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-
-    elif args.dataset == "city2bdd":
-        print('loading our dataset...........')
-        args.s_imdb_name = "bdd_cityscape_2007_train_s"
-        args.t_imdb_name = "bdd_2007_train"
-        
-        args.s_imdbtest_name = "bdd_cityscape_2007_test_s500"
-        args.t_imdbtest_name = "bdd_2007_valall"
-
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[4,8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-
-    # KITTI->cityscape
-    elif args.dataset == "KC":
-        print('loading our dataset...........')
-        args.s_imdb_name = "KITTI_2007_trainall"
-        args.s_imdbtest_name = "KITTI_2007_train500"
-        args.t_imdbtest_name = "KITTI_cityscape_2007_test_s500"
-
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-        # args.set_cfgs = ['ANCHOR_SCALES', '[4,8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-
-    # cityscape->KITTI
-    elif args.dataset == "CK":
-        print('loading our dataset...........')
-        args.s_imdb_name = "KITTI_cityscape_2007_train_s"
-        args.t_imdb_name = "KITTI_2007_trainall"
-        args.s_imdbtest_name = "KITTI_cityscape_2007_test_s500"
-        args.t_imdbtest_name = "KITTI_2007_trainall"
-
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-        # args.set_cfgs = ['ANCHOR_SCALES', '[4,8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-
-    # SIM -> cityscape
-    elif args.dataset == "SIM2City":
-        print('loading our dataset...........')
-        args.s_imdb_name = "SIM_2012_train_s"
-        args.t_imdb_name = "SIM_cityscape_2007_train_s"
-        args.s_imdbtest_name = ""
-        args.t_imdbtest_name = "SIM_cityscape_2007_test_s500"
-
-        args.imdb_name = args.s_imdb_name
-        # args.set_cfgs = ['ANCHOR_SCALES', '[4,8,16,32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    elif args.dataset == "voc2cartoon":
-        args.s_imdb_name = "cartoon_voc_2007_trainval+cartoon_voc_2012_trainval"
-        args.t_imdb_name = "cartoon_2007_train_cartoon"
-        args.s_imdbtest_name = "cartoon_voc_2007_test"
-        args.t_imdbtest_name = "cartoon_2007_test_cartoon"
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    # Pascal -> watercolor
-    elif args.dataset == "voc2wc":
-        args.s_imdb_name = "watercolor_voc_2007_trainval+watercolor_voc_2012_trainval"
-        args.t_imdb_name = "wc_2007_train_wc"
-        args.s_imdbtest_name = "watercolor_voc_2007_test"
-        args.t_imdbtest_name = "wc_2007_test_wc"
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    # pascal -> comic
-    elif args.dataset == "voc2comic":
-        args.s_imdb_name = "comic_voc_2007_trainval+comic_voc_2012_trainval"
-        args.t_imdb_name = "comic_2007_train_comic"
-        args.s_imdbtest_name = "comic_voc_2007_test"
-        args.t_imdbtest_name = "comic_2007_test_comic"
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    # pascal -> clipart
-    elif args.dataset == "voc2clipart":
-        args.s_imdb_name = "voc_2007_trainval+voc_2012_trainval"
-        args.t_imdb_name = "clipart_2007_traintest1k"
-        args.s_imdbtest_name = "voc_2007_test"
-        args.t_imdbtest_name = "clipart_2007_traintest1k"
-        args.imdb_name = args.s_imdb_name
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
-
-    elif args.dataset == "pascal_voc_0712":
-        args.imdb_name = "voc_2007_trainval+voc_2012_trainval"
-        args.imdbval_name = "voc_2007_test"
-        args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']
     elif args.dataset == "coco":
-        args.imdb_name = "coco_2014_train+coco_2014_valminusminival"
-        args.imdbval_name = "coco_2014_minival"
+        args.imdb_name = "coco2017train"
+        args.imdbval_name = "coco2017val"
         args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
-    elif args.dataset == "imagenet":
-        args.imdb_name = "imagenet_train"
-        args.imdbval_name = "imagenet_val"
-        args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
-    elif args.dataset == "vg":
-        # train sizes: train, smalltrain, minitrain
-        # train scale: ['150-50-20', '150-50-50', '500-150-80', '750-250-150', '1750-700-450', '1600-400-20']
-        args.imdb_name = "vg_150-50-50_minitrain"
-        args.imdbval_name = "vg_150-50-50_minival"
-        args.set_cfgs = ['ANCHOR_SCALES', '[4, 8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '50']
+    else:
+        raise NotImplementedError
 
-    args.cfg_file = "cfgs/{}_ls.yml".format(args.net) if args.large_scale else "cfgs/{}.yml".format(args.net)
-
+    args.cfg_file = os.path.join(os.path.dirname(__file__), "cfgs", "{}_ls.yml".format(args.net) if args.large_scale else "cfgs/{}.yml".format(args.net))
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
@@ -280,12 +176,9 @@ if __name__ == '__main__':
 
     print('Using config:')
     print(pprint.pformat(cfg))
-    # pprint.pprint(cfg)
     np.random.seed(cfg.RNG_SEED)
-
     # torch.backends.cudnn.benchmark = True
-    if torch.cuda.is_available() and not args.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    assert torch.cuda.is_available() and args.cuda
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.

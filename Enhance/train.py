@@ -13,7 +13,7 @@ from sampler import InfiniteSamplerWrapper
 import numpy as np
 import itertools
 
-cudnn.benchmark = True
+cudnn.benchmark = False
 Image.MAX_IMAGE_PIXELS = None  # Disable DecompressionBombError
 # Disable OSError: image file is truncated
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -25,7 +25,7 @@ def train_transform(scenario_name):
             transforms.Resize(600),
             transforms.RandomCrop(128),
         ]
-    else :
+    else:
         transform_list = [
             transforms.Resize(size=(600, 800)),
             transforms.RandomCrop(128),
@@ -36,7 +36,7 @@ class FlatFolderDataset(data.Dataset):
     def __init__(self, root, transform):
         super(FlatFolderDataset, self).__init__()
         self.root = root
-        self.paths = list(Path(self.root).glob('*'))
+        self.paths = list(Path(self.root).glob('*.jpg'))
         self.transform = transform
         self.pixel_means = np.array([[[102.9801, 115.9465, 122.7717]]])
 
@@ -66,23 +66,25 @@ def adjust_learning_rate(init_lr,optimizer, iteration_count):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+# python train.py --scenario_name voc2clipart --content_dir data/voc2clipart --style_dir data/voc2clipart --vgg pre_trained/vgg16_ori.pth --save_dir models/voc2clipart
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--scenario_name', type=str, required=True, choices=['voc2clipart', 'voc2wc', 'city2foggy' ,'KC'],
+parser.add_argument('--scenario_name', type=str, choices=['coco2scenes100', 'voc2clipart', 'voc2wc', 'city2foggy' ,'KC'],
                     help='choose one from voc2clipart, voc2wc, city2foggy and KC')
-parser.add_argument('--content_dir', type=str, required=True,
+parser.add_argument('--id', type=str)
+parser.add_argument('--content_dir', type=str,
                     help='Directory path to a batch of content images')
-parser.add_argument('--style_dir', type=str, required=True,
+parser.add_argument('--style_dir', type=str,
                     help='Directory path to a batch of style images')
 
 parser.add_argument('--vgg', type=str, default='./models/vgg16.pth')
 
 parser.add_argument('--save_dir', default='./models',
                     help='Directory to save the model')
-parser.add_argument('--n_threads', type=int, default=128)
+parser.add_argument('--n_threads', type=int, default=8)
 parser.add_argument('--save_model_interval', type=int, default=-1)
 parser.add_argument('--lr_decay', type=float, default=5e-5)
-parser.add_argument('--max_iter', type=int, default=160000)
+parser.add_argument('--max_iter', type=int, default=50000)
 parser.add_argument('--batch_size', type=int, default=8)
 
 parser.add_argument('--lr_decoder', type=float, default=1e-4)
@@ -94,13 +96,11 @@ parser.add_argument('--constrain_weight', type=float, default=1)
 parser.add_argument('--before_fcs_steps', type=int, default=0)
 args = parser.parse_args()
 
-assert args.scenario_name in ['voc2clipart', 'voc2wc', 'city2foggy' ,'KC'], \
-    'please choose one from voc2clipart, voc2wc, city2foggy and KC'
-
 device = torch.device('cuda')
 
-if not os.path.exists(args.save_dir):
-    os.makedirs(args.save_dir)
+args.save_dir = os.path.join(os.path.dirname(__file__), 'models')
+args.vgg = os.path.join(os.path.dirname(__file__), 'models', 'vgg16_ori.pth')
+args.content_dir = args.style_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'Intersections', 'images', 'train_lmdb', args.id, 'jpegs')
 
 decoder = net.decoder
 vgg = net.vgg
@@ -114,8 +114,8 @@ network = net.Net(vgg, decoder,fc1,fc2)
 network.train()
 network.to(device)
 
-content_tf = train_transform(args.scenario_name)
-style_tf = train_transform(args.scenario_name)
+content_tf = train_transform(None)
+style_tf = train_transform(None)
 
 content_dataset = FlatFolderDataset(args.content_dir, content_tf)
 style_dataset = FlatFolderDataset(args.style_dir, style_tf)
@@ -133,7 +133,9 @@ style_iter = iter(data.DataLoader(
 optimizer1 = torch.optim.Adam(itertools.chain(*[network.dec_1.parameters(),network.dec_2.parameters(), network.dec_3.parameters(), network.dec_4.parameters()]), lr=args.lr_decoder)
 optimizer2 = torch.optim.Adam(itertools.chain(*[network.fc1.parameters(),network.fc2.parameters()]), lr=args.lr_fcs)
 
-for i in tqdm(range(args.max_iter)):
+# for V in 001 003 005 006 007 008 009 011 012 013 014 015 016 017 019 020 023 025 027 034 036 039 040 043 044 046 048 049 050 051 053 054 055 056 058 059 060 066 067 068 069 070 071 073 074 075 076 077 080 085 086 087 088 090 091 092 093 094 095 098 099 105 108 110 112 114 115 116 117 118 125 127 128 129 130 131 132 135 136 141 146 148 149 150 152 154 156 158 159 160 161 164 167 169 170 171 172 175 178 179 ; do python train.py --id ${V} ; done
+
+for i in tqdm(range(args.max_iter), ascii=True):
     adjust_learning_rate(args.lr_decoder,optimizer1, iteration_count=i)
 
     content_images = next(content_iter).to(device)
@@ -172,15 +174,14 @@ for i in tqdm(range(args.max_iter)):
         state_dict = net.decoder.state_dict()
         for key in state_dict.keys():
             state_dict[key] = state_dict[key].to(torch.device('cpu'))
-        torch.save(state_dict, args.save_dir +
-                '/decoder_iter_{:d}.pth'.format(i + 1))
+        torch.save(state_dict, os.path.join(args.save_dir, 'decoder_%s_iter_%d.pth' % (args.id, i + 1)))
+
         state_dict = net.fc1.state_dict()
         for key in state_dict.keys():
             state_dict[key] = state_dict[key].to(torch.device('cpu'))
-        torch.save(state_dict, args.save_dir +
-                '/fc1_iter_{:d}.pth'.format(i + 1))
+        torch.save(state_dict, os.path.join(args.save_dir, 'fc1_%s_iter_%d.pth' % (args.id, i + 1)))
+
         state_dict = net.fc2.state_dict()
         for key in state_dict.keys():
             state_dict[key] = state_dict[key].to(torch.device('cpu'))
-        torch.save(state_dict, args.save_dir +
-                '/fc2_iter_{:d}.pth'.format(i + 1))
+        torch.save(state_dict, os.path.join(args.save_dir, 'fc2_%s_iter_%d.pth' % (args.id, i + 1)))
